@@ -33,7 +33,7 @@ docker tag demo-flask-backend:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazona
 
 5. Push the image to ECR with this command
 ```bash
-docker push $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/demo-flask-backend:latest
+docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/demo-flask-backend:latest
 ```
 
 6. Go to the ECR console to confirm that the image we have created has been pushed into our repo
