@@ -43,7 +43,7 @@ wget https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-i
 sed -i 's/{{cluster_name}}/'${ClusterName}'/;s/{{region_name}}/'${RegionName}'/;s/{{http_server_toggle}}/"'${FluentBitHttpServer}'"/;s/{{http_server_port}}/"'${FluentBitHttpPort}'"/;s/{{read_from_head}}/"'${FluentBitReadFromHead}'"/;s/{{read_from_tail}}/"'${FluentBitReadFromTail}'"/' cwagent-fluent-bit-quickstart.yaml 
 ```
 - open the DaemonSet object which has the fluent-bit name and add the following code below the spec, mind the indentation:
-```bash
+```YAML
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
