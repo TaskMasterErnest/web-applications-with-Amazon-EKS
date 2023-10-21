@@ -1,0 +1,79 @@
+name: Build Frontend
+# specify trigger
+on:
+  push: 
+    branches: [ main ]
+# specify job to start
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Check Nodejs version
+        run: node -v
+
+      - name: Build Application
+        run: |
+          npm install
+          npm run build
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1 
+
+      - name: Get Image Tag (Version)
+        id: image
+        run: |
+          VERSION=\$(echo \${{ github.sha }} | cut -c1-8)
+          echo VERSION=\$VERSION
+          echo "::set-output name=version::\$VERSION"
+
+      - name: Build, Tag & Push Image to Amazon ECR
+        id: image-info
+        env: 
+          ECR_REGISTRY: \${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: demo-frontend
+          IMAGE_TAG: \${{ steps.image.outputs.version }}
+        run: |
+          echo "::set-ouput name=ecr_repository::\$ECR_REPOSITORY"
+          echo "set-output name=image_tag::\$IMAGE_TAG"
+          docker build -t \$ECR_REGISTRY/\$ECR_REPOSITORY:\$IMAGE_TAG .
+          docker push \$ECR_REGISTRY/\$ECR_REPOSITORY:\$IMAGE_TAG
+
+      # # ADD KUSTOMIZE STAGES, uncomment to run these steps.
+      # - name: Setup KUSTOMIZE
+      #   uses: imranismail/setup-kustomize@v1
+
+      # - name: Checkout Kustomize Repo 
+      #   uses: actions/checkout@v2
+      #   with:
+      #     repository: $GITHUB_USERNAME/web-applications-with-Amazon-EKS-k8s-files 
+      #     ref: main
+      #     token: \${{ secrets.GITHUB_TOKEN }}
+      #     path: web-applications-with-Amazon-EKS-k8s-files/k8s-manifest-repo
+
+      # - name: Update Kubernetes Resources
+      #   run: |
+      #     echo \${{ steps.login-ecr.outputs.registry }}
+      #     echo \${{ steps.image-info.outputs.ecr_repository }}
+      #     echo \${{ steps.image-info.outputs.image_tag }}
+      #     cd web-applications-with-Amazon-EKS-k8s-files/k8s-manifest-repo/overlays/dev
+      #     kustomize edit set image \${{ steps.login-ecr.outputs.registry}}/\${{ steps.image-info.outputs.ecr_repository }}=\${{ steps.login-ecr.outputs.registry}}/\${{ steps.image-info.outputs.ecr_repository }}:\${{ steps.image-info.outputs.image_tag }}
+      #     cat kustomization.yaml
+
+      # - name: Commit Files 
+      #   run: |
+      #     cd web-applications-with-Amazon-EKS-k8s-files
+      #     git config --global user.email "github-actions@github.com"
+      #     git config --global user.name "github-actions"
+      #     git commit -am "Update image tag"
+      #     git push -u origin main
