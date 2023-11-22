@@ -77,7 +77,7 @@ Kustomize in this use-case is a tool that is used to modify Kubernetes manifest 
 
 
 ### Set Up ArgoCD Cluster
-1. Install ArgoCD in the EKS cluster. Run the follwing code to do so:
+1. Install ArgoCD in the EKS cluster. Run the following code to do so:
 ```bash
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
@@ -124,4 +124,18 @@ With the introduction of these new tools, the CD process will look somewhat like
 2. the Trivy scans for vulnerabilities in the new image
 3. the Kustomize tool creates new k8s manifests with the new image information
 4. the Checkov tool inspects vulnerabilities and configuration of k8s manifest files
-5. ArgoCD syncs job and starts to deploy manifest files.
+5. ArgoCD syncs jobs and starts to deploy manifest files.
+
+There will now be two GitHub workflow files; one in the frontend application repo and one in the K8s manifest repo.
+
+- NB: For deployments with ArgoCD to the EKS cluster, we will do the following:
+  - deactivate auto syncing
+  - create a new ArgoCD account & create an auth-token for new account
+  - configure RBAC policies for new ArgoCD account
+
+### Create GitHub Actions Workflow Script in K8s Manifest Repo
+1. create a `.github/workflows` repo in the K8s manifest repo. Populate it with code from the `secops-practices/k8s-build.yaml` file.
+- the K8s code will be checked out and set up.
+- Kustomize will apply the changes that we have specified to the root YAML manifest files.
+- the Checkov tool will run and cross-check the K8s configuration.
+- then, we install ArgoCD, sync it with our already existing `eks-cd-pipeline` application, with an authentication token.
